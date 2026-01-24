@@ -1,0 +1,93 @@
+Endpoint Structure
+All requests are made against the base endpoint:
+https://knmplace.com/wp-json/profilegrid/v1
+
+Append the query parameter ?integration=1 and specify the action you wish to execute:
+
+Get Access Token
+https://knmplace.com/wp-json/profilegrid/v1?integration=1&action=get_access_token
+POST body: username, application_password. Returns a short-lived token to be used in PG-Token or Authorization: Bearer header.
+Get All Groups
+https://knmplace.com/wp-json/profilegrid/v1?integration=1&action=get_all_groups
+Headers: PG-Token or Authorization Bearer; optional query params page, per_page, search.
+Get Single Group
+https://knmplace.com/wp-json/profilegrid/v1?integration=1&action=get_single_group&group_id=123
+Headers: PG-Token or Authorization Bearer; provide group_id query parameter.
+Create Group
+https://knmplace.com/wp-json/profilegrid/v1?integration=1&action=create_group
+POST body: group_name (required) plus optional group properties.
+Update Group
+https://knmplace.com/wp-json/profilegrid/v1?integration=1&action=update_group&group_id=123
+POST body: group_id and any fields to update (partial update).
+Delete Group
+https://knmplace.com/wp-json/profilegrid/v1?integration=1&action=delete_group&group_id=123
+POST body/query: group_id; optional force=1 for hard delete, otherwise soft delete.
+Get Group Members
+https://knmplace.com/wp-json/profilegrid/v1?integration=1&action=get_group_members&group_id=123
+Headers: PG-Token or Authorization Bearer; query params: group_id, page, per_page, search, status, role.
+Add Group Members
+https://knmplace.com/wp-json/profilegrid/v1?integration=1&action=add_group_members
+POST body: group_id plus user_ids (array/int) and/or user_emails (array) to add.
+Remove Group Member
+https://knmplace.com/wp-json/profilegrid/v1?integration=1&action=remove_group_member
+POST body: group_id and user_id to remove from that group.
+Assign Group
+https://knmplace.com/wp-json/profilegrid/v1?integration=1&action=assign_group
+POST body: group_id and user_id. Adds the user to the group or returns already_member.
+Remove From Group
+https://knmplace.com/wp-json/profilegrid/v1?integration=1&action=remove_from_group
+POST body: group_id and user_id. Removes the user from the group.
+Get Group Sections
+https://knmplace.com/wp-json/profilegrid/v1?integration=1&action=get_group_section&group_id=123
+Headers: PG-Token or Authorization Bearer; query/body: group_id. Returns all sections and their fields.
+Create Group Section
+https://knmplace.com/wp-json/profilegrid/v1?integration=1&action=create_group_section
+POST body: group_id, section_name, optional ordering, section_desc, section_options.
+Update Group Section
+https://knmplace.com/wp-json/profilegrid/v1?integration=1&action=update_group_section
+POST body: group_id, section_id and any section fields to update.
+Delete Section
+https://knmplace.com/wp-json/profilegrid/v1?integration=1&action=delete_section
+POST body: group_id and section_id. Deletes the section and its fields.
+Create Group Field
+https://knmplace.com/wp-json/profilegrid/v1?integration=1&action=create_group_field
+POST body: group_id, section_id, field_label, field_type and optional field options/settings.
+Get Users
+https://knmplace.com/wp-json/profilegrid/v1?integration=1&action=get_users
+Headers: PG-Token or Authorization Bearer; optional query: page, per_page, role, status, group_id, search.
+Get User Details
+https://knmplace.com/wp-json/profilegrid/v1?integration=1&action=get_user_details&user_id=123
+Headers: PG-Token or Authorization Bearer; query/body: user_id. Returns groups, status, profile URL and more.
+Update User Profile Fields
+https://knmplace.com/wp-json/profilegrid/v1?integration=1&action=update_user_profile
+POST body: user_id and fields (array) keyed by field_key or field_id with values to store.
+Activate User Account
+https://knmplace.com/wp-json/profilegrid/v1?integration=1&action=activate_user_account
+POST body: user_id. Sets rm_user_status=0 and notifies relevant groups.
+Deactivate User Account
+https://knmplace.com/wp-json/profilegrid/v1?integration=1&action=deactivate_user_account
+POST body: user_id. Sets rm_user_status=1 and notifies relevant groups.
+Activate All Users (non-admin)
+https://knmplace.com/wp-json/profilegrid/v1?integration=1&action=activate_all_user
+POST: No additional body required. Activates all non-admins and reports counts.
+Deactivate All Users (non-admin)
+https://knmplace.com/wp-json/profilegrid/v1?integration=1&action=deactivate_all_user
+POST: No additional body required. Deactivates all non-admins and reports counts.
+Get Membership Requests
+https://knmplace.com/wp-json/profilegrid/v1?integration=1&action=get_membership_requests
+Headers: PG-Token or Authorization Bearer; optional query: group_id, user_id, status, search, page, per_page.
+Create Membership Request
+https://knmplace.com/wp-json/profilegrid/v1?integration=1&action=create_membership_request
+POST body: group_id, user_id and optional message. Creates a pending join request.
+Approve Membership Request
+https://knmplace.com/wp-json/profilegrid/v1?integration=1&action=approve_membership_request&request_id=456
+POST/query: request_id. Adds user to the group and removes the request.
+Deny Membership Request
+https://knmplace.com/wp-json/profilegrid/v1?integration=1&action=deny_membership_request&request_id=456
+POST/query: request_id; optional reason. Removes the request and notifies user.
+Bulk Approve All Membership Requests (by Group)
+https://knmplace.com/wp-json/profilegrid/v1?integration=1&action=bulk_approve_all_membership_requests
+POST body: group_id. Approves all pending requests for that group.
+Bulk Deny All Membership Requests (by Group)
+https://knmplace.com/wp-json/profilegrid/v1?integration=1&action=bulk_deny_all_membership_requests
+POST body: group_id and optional reason. Denies all pending requests for that group.

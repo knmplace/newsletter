@@ -1,0 +1,216 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// USER MANAGEMENT
+// ============================================
+
+model User {
+  id                Int      @id @default(autoincrement())
+  wordpressId       String   @unique @map("wordpress_id")
+  email             String   @unique
+  firstName         String?  @map("first_name")
+  lastName          String?  @map("last_name")
+  displayName       String?  @map("display_name")
+  roles             String[] @default([])
+  isActive          Boolean  @default(true) @map("is_active")
+  lastSyncedAt      DateTime @default(now()) @map("last_synced_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  preferences       UserPreference?
+  campaignRecipients CampaignRecipient[]
+  adminUser         AdminUser?
+
+  @@map("users")
+}
+
+model AdminUser {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @unique @map("user_id")
+  canManageTemplates Boolean @default(true) @map("can_manage_templates")
+  canManageCampaigns Boolean @default(true) @map("can_manage_campaigns")
+  canManageUsers     Boolean @default(true) @map("can_manage_users")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("admin_users")
+}
+
+model UserPreference {
+  id                    Int      @id @default(autoincrement())
+  userId                Int      @unique @map("user_id")
+  isSubscribed          Boolean  @default(true) @map("is_subscribed")
+  emailFrequency        String   @default("weekly") @map("email_frequency") // daily, weekly, monthly
+  preferredCategories   String[] @default([]) @map("preferred_categories")
+  unsubscribedAt        DateTime? @map("unsubscribed_at")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+}
+
+// ============================================
+// NEWSLETTER TEMPLATES
+// ============================================
+
+model NewsletterTemplate {
+  id              Int      @id @default(autoincrement())
+  name            String   @unique
+  description     String?
+  templateType    String   @map("template_type") // classic, modern, minimal, magazine, announcement
+  subjectLine     String   @map("subject_line")
+  preheaderText   String?  @map("preheader_text")
+
+  // Customizable fields (JSON stored as text, parsed in app)
+  colors          String   @default("{}") // JSON: {primary, secondary, background, text}
+  headerText      String?  @map("header_text")
+  footerText      String?  @map("footer_text")
+
+  // Content configuration
+  includeLatestPosts    Boolean  @default(true) @map("include_latest_posts")
+  maxPosts              Int      @default(5) @map("max_posts")
+  customContent         String?  @map("custom_content") @db.Text
+
+  isActive        Boolean  @default(true) @map("is_active")
+  isArchived      Boolean  @default(false) @map("is_archived")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  campaigns       Campaign[]
+
+  @@map("newsletter_templates")
+}
+
+// ============================================
+// CAMPAIGNS
+// ============================================
+
+model Campaign {
+  id              Int      @id @default(autoincrement())
+  name            String
+  templateId      Int      @map("template_id")
+
+  // Override template defaults if needed
+  subjectLine     String?  @map("subject_line")
+  preheaderText   String?  @map("preheader_text")
+
+  // Recipient selection
+  recipientFilter String   @default("all") @map("recipient_filter") // all, subscribed, category, custom
+  categoryFilter  String[] @default([]) @map("category_filter")
+
+  // Scheduling
+  status          String   @default("draft") // draft, scheduled, sending, sent, failed
+  scheduledAt     DateTime? @map("scheduled_at")
+  sentAt          DateTime? @map("sent_at")
+
+  // Stats
+  totalRecipients Int      @default(0) @map("total_recipients")
+  totalSent       Int      @default(0) @map("total_sent")
+  totalFailed     Int      @default(0) @map("total_failed")
+
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  template        NewsletterTemplate @relation(fields: [templateId], references: [id])
+  recipients      CampaignRecipient[]
+  emailQueue      EmailQueue[]
+
+  @@map("campaigns")
+}
+
+model CampaignRecipient {
+  id         Int      @id @default(autoincrement())
+  campaignId Int      @map("campaign_id")
+  userId     Int      @map("user_id")
+  status     String   @default("pending") // pending, sent, failed, bounced
+  sentAt     DateTime? @map("sent_at")
+  failedAt   DateTime? @map("failed_at")
+  errorMessage String? @map("error_message")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, userId])
+  @@map("campaign_recipients")
+}
+
+// ============================================
+// EMAIL QUEUE
+// ============================================
+
+model EmailQueue {
+  id          Int      @id @default(autoincrement())
+  campaignId  Int      @map("campaign_id")
+  recipientEmail String @map("recipient_email")
+  recipientName  String? @map("recipient_name")
+
+  // Email content (generated and ready to send)
+  subject     String
+  htmlBody    String   @map("html_body") @db.Text
+  textBody    String?  @map("text_body") @db.Text
+
+  // Personalization data (JSON)
+  variables   String   @default("{}") // JSON: {first_name, last_name, unsubscribe_link}
+
+  status      String   @default("pending") // pending, sending, sent, failed
+  attempts    Int      @default(0)
+  maxAttempts Int      @default(3) @map("max_attempts")
+
+  sentAt      DateTime? @map("sent_at")
+  failedAt    DateTime? @map("failed_at")
+  errorMessage String?  @map("error_message")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("email_queue")
+}
+
+// ============================================
+// WORDPRESS INTEGRATION
+// ============================================
+
+model WordPressPost {
+  id              Int      @id @default(autoincrement())
+  wordpressId     String   @unique @map("wordpress_id")
+  title           String
+  excerpt         String?  @db.Text
+  content         String?  @db.Text
+  link            String
+  author          String?
+  featuredImage   String?  @map("featured_image")
+  categories      String[] @default([])
+  tags            String[] @default([])
+  publishedAt     DateTime @map("published_at")
+
+  isCached        Boolean  @default(true) @map("is_cached")
+  lastCachedAt    DateTime @default(now()) @map("last_cached_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([publishedAt])
+  @@index([isCached])
+  @@map("wordpress_posts_cache")
+}
