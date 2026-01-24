@@ -23,6 +23,67 @@ Building a newsletter management application with:
 
 ---
 
+## n8n MCP Server & Skills
+
+**CRITICAL REMINDER:** When building n8n workflows (Phases 3, 5, 6, 10), use the n8n MCP server tools and skills!
+
+### Available n8n MCP Tools
+**DO NOT manually create workflows - use these tools:**
+
+**Documentation & Discovery:**
+- `search_nodes` - Search 1,084 nodes (core/community/verified)
+- `get_node` - Get node details (minimal/standard/full)
+- `validate_node` - Validate node configuration
+- `validate_workflow` - Complete workflow validation
+- `search_templates` - Search 2,709 templates
+- `get_template` - Get workflow JSON from templates
+
+**Workflow Management:**
+- `n8n_create_workflow` - Create new workflows
+- `n8n_get_workflow` - Retrieve existing workflows
+- `n8n_update_workflow` - Full workflow update
+- `n8n_update_partial_workflow` - Partial update
+- `n8n_delete_workflow` - Delete workflows
+- `n8n_list_workflows` - List all workflows
+- `n8n_validate_workflow` - Validate before deployment
+
+**Execution:**
+- `n8n_test_workflow` - Test/trigger workflows
+- `n8n_list_executions` - List execution history
+- `n8n_get_execution` - Get execution details
+
+### n8n Skills (Auto-activate)
+1. **n8n Expression Syntax** - Correct `{{}}` patterns
+2. **n8n MCP Tools Expert** - Effective tool usage
+3. **n8n Workflow Patterns** - 5 proven architectures
+4. **n8n Validation Expert** - Resolve validation errors
+5. **n8n Node Configuration** - Operation-aware setup
+6. **n8n Code JavaScript** - JavaScript in Code nodes
+7. **n8n Code Python** - Python with limitations
+
+### Workflow Building Process (MUST FOLLOW)
+1. **Search templates first** - Use `search_templates` and `get_template`
+2. **Research nodes** - Use `search_nodes` and `get_node`
+3. **Build incrementally** - Add nodes one at a time
+4. **Validate before deployment** - Use `validate_workflow`
+5. **Test thoroughly** - Use `n8n_test_workflow`
+
+### Phases Using n8n MCP
+- **Phase 3** ← Email Queue Processor, Test Email workflows
+- **Phase 5** ← Campaign Send, WordPress User Sync workflows
+- **Phase 6** ← WordPress Posts Cache workflow
+- **Phase 10** ← Deploy all workflows to n8n instance
+
+### Connection Details
+- **n8n URL:** https://apps.nikodamas.org/
+- **API Key:** Stored in `.env.local`
+- **PostgreSQL (for workflows):** `POSTGRES-N8N:5432` (internal Docker)
+- **SMTP (for workflows):** `mail.knmplace.com:465` (SSL)
+
+**⚠️ REMINDER:** Before Phase 3, verify n8n MCP server is accessible!
+
+---
+
 ## Current Status
 
 ### ✅ Completed
@@ -76,29 +137,29 @@ Building a newsletter management application with:
 - [x] Build user sync mechanism
 - [x] Implement admin role detection
 
-**Phase 3: Email Infrastructure & n8n Workflows**
+**Phase 3: Email Infrastructure & n8n Workflows** ⚠️ USE n8n MCP TOOLS
 - [ ] Create 5 React Email templates
 - [ ] Build template rendering system
 - [ ] Implement Handlebars variable replacement
-- [ ] Create n8n Email Queue Processor workflow
-- [ ] Create n8n Test Email workflow
+- [ ] Create n8n Email Queue Processor workflow (USE: search_templates, n8n_create_workflow)
+- [ ] Create n8n Test Email workflow (USE: search_templates, n8n_create_workflow)
 - [ ] Configure SMTP in n8n
-- [ ] Test email sending
+- [ ] Test email sending (USE: n8n_test_workflow, validate_workflow)
 
 **Phase 4: Template Management (Admin Backend)**
 - [ ] Create template CRUD API routes
 - [ ] Build template preview functionality
 - [ ] Implement template archiving
 
-**Phase 5: Campaign Management & n8n Integration**
+**Phase 5: Campaign Management & n8n Integration** ⚠️ USE n8n MCP TOOLS
 - [ ] Create campaign CRUD API routes
 - [ ] Build recipient selection logic
-- [ ] Create n8n Campaign Send workflow
-- [ ] Create n8n WordPress User Sync workflow
+- [ ] Create n8n Campaign Send workflow (USE: search_templates, n8n_create_workflow, validate_workflow)
+- [ ] Create n8n WordPress User Sync workflow (USE: search_nodes for WordPress/HTTP nodes)
 - [ ] Implement campaign stats/tracking
 
-**Phase 6: WordPress Posts Integration**
-- [ ] Create n8n WordPress Posts Cache workflow
+**Phase 6: WordPress Posts Integration** ⚠️ USE n8n MCP TOOLS
+- [ ] Create n8n WordPress Posts Cache workflow (USE: search_templates, get_node)
 - [ ] Create API routes for cached posts
 - [ ] Add posts to template variable system
 
@@ -121,12 +182,12 @@ Building a newsletter management application with:
 - [ ] Login form with validation
 - [ ] Error handling and redirects
 
-**Phase 10: n8n Workflow Activation**
-- [ ] Import all 5 workflows to n8n instance
-- [ ] Configure SMTP in Email Send nodes
-- [ ] Configure PostgreSQL in all workflows
-- [ ] Activate workflows
-- [ ] Test each workflow
+**Phase 10: n8n Workflow Activation** ⚠️ USE n8n MCP TOOLS
+- [ ] Import all 5 workflows to n8n instance (USE: n8n_create_workflow or n8n_update_workflow)
+- [ ] Configure SMTP in Email Send nodes (USE: get_node, validate_node)
+- [ ] Configure PostgreSQL in all workflows (USE: validate_workflow)
+- [ ] Activate workflows (USE: n8n_update_workflow)
+- [ ] Test each workflow (USE: n8n_test_workflow, n8n_list_executions)
 - [ ] Document webhook URLs
 
 **Phase 11: Deployment Setup**
