@@ -1,7 +1,7 @@
 # Newsletter Application - Implementation Progress
 
-**Last Updated:** 2026-01-24
-**Current Phase:** Phase 2 - ProfileGrid Integration & Authentication (Completed)
+**Last Updated:** 2026-01-30
+**Current Phase:** Phase 3 - Email Infrastructure & n8n Workflows (In Progress)
 **Project Location:** `/home/apps/newsletter/`
 **Plan File:** `/root/.claude/plans/logical-jumping-glade.md`
 
@@ -323,14 +323,69 @@ Building a newsletter management application with:
 
 ## n8n Workflows Status
 
-### Workflows to Create (5 total)
-1. [ ] **Email Queue Processor** - Scheduled (every 1 min), sends queued emails
+### n8n MCP Server Status
+- **Package:** n8n-mcp v2.33.5
+- **Config Location:** `/home/apps/newsletter/.mcp.json`
+- **Status:** ✅ Connected and working
+- **Nodes Available:** 803 nodes loaded
+- **Templates Available:** 2,737 templates indexed
+
+### Workflows Created (2/5)
+1. [x] **Email Queue Processor** - ID: `8lBSn7oHEjzs65TY` - Scheduled (every 1 min), sends queued emails
 2. [ ] **Campaign Send** - Webhook, populates email queue
 3. [ ] **WordPress User Sync** - Webhook + scheduled daily, syncs users
 4. [ ] **WordPress Posts Cache** - Scheduled daily at 6am, caches posts
-5. [ ] **Test Email** - Webhook, sends test email
+5. [x] **Test Email** - ID: `xo7F2Mio1eaZy0t1` - Webhook: `https://apps.nikodamas.org/webhook/newsletter-test-email`
 
-**Status:** Workflows designed, not yet created in n8n
+**Status:** 2 workflows created, awaiting credential configuration
+
+### ⚠️ REQUIRED: n8n Credential Configuration
+
+Before workflows can run, you must configure these credentials in n8n UI:
+
+**1. SMTP Credential (name: "Newsletter SMTP")** ✅ Created
+```
+Host: mail.knmplace.com
+Port: 465
+User: news@knmplace.com
+Password: (from .env.local SMTP_PASSWORD)
+Secure (SSL): true
+```
+
+**2. PostgreSQL Credential (name: "Newsletter PostgreSQL")**
+```
+Host: POSTGRES-N8N (internal Docker) or 192.168.1.252 (external)
+Port: 5432
+Database: newsletter
+User: n8nuser
+Password: (from .env.local DATABASE_URL)
+SSL: false
+```
+
+**3. Header Auth Credential (name: "Newsletter Webhook Auth")**
+```
+Name: X-Newsletter-Key
+Value: (from .env.local N8N_WEBHOOK_AUTH_KEY)
+```
+Used by: Test Email webhook (and future Campaign Send, User Sync webhooks)
+
+**Steps to configure:**
+1. Go to https://apps.nikodamas.org/
+2. Navigate to Credentials → Add Credential
+3. Create "SMTP" credential with name "Newsletter SMTP" ✅ Done
+4. Create "Postgres" credential with name "Newsletter PostgreSQL"
+5. Create "Header Auth" credential with name "Newsletter Webhook Auth"
+   - Header Name: `X-Newsletter-Key`
+   - Header Value: copy from `.env.local` → `N8N_WEBHOOK_AUTH_KEY`
+6. Open "Newsletter - Test Email" workflow → Test Email Webhook node → Assign "Newsletter Webhook Auth" credential
+
+**Calling webhooks with auth:**
+```bash
+curl -X POST https://apps.nikodamas.org/webhook/newsletter-test-email \
+  -H "Content-Type: application/json" \
+  -H "X-Newsletter-Key: nws_k7x9Qm2pL4vR8wJ5tY6uN3bE1cH0fA" \
+  -d '{"to_email": "test@example.com"}'
+```
 
 ---
 
@@ -359,12 +414,12 @@ Building a newsletter management application with:
 
 ## Newsletter Templates
 
-### 5 Templates to Build
-1. **Classic Newsletter** - Header, hero, 3-column features, posts, footer
-2. **Modern Card Layout** - Minimalist header, large hero, card grid
-3. **Minimal Text-Focused** - Simple header, text-heavy, inline summaries
-4. **Image-Heavy Magazine** - Bold header, image gallery, featured post
-5. **Announcement/Update** - Prominent banner, single-column, update list
+### 5 Templates Built ✅
+1. **Classic Newsletter** - `src/emails/templates/ClassicNewsletter.tsx`
+2. **Modern Card Layout** - `src/emails/templates/ModernCardLayout.tsx`
+3. **Minimal Text-Focused** - `src/emails/templates/MinimalTextFocused.tsx`
+4. **Image-Heavy Magazine** - `src/emails/templates/MagazineLayout.tsx`
+5. **Announcement/Update** - `src/emails/templates/AnnouncementUpdate.tsx`
 
 **All include:**
 - Mobile responsive (600px max width)
@@ -373,7 +428,21 @@ Building a newsletter management application with:
 - Dynamic WordPress post insertion
 - Customizable colors and text
 
-**Status:** Designed, not yet implemented
+**Shared Components:**
+- `src/emails/components/EmailHeader.tsx`
+- `src/emails/components/EmailFooter.tsx`
+- `src/emails/components/EmailButton.tsx`
+- `src/emails/components/PostCard.tsx`
+
+**Rendering System:**
+- `src/lib/email-renderer.ts` - Handlebars + React Email renderer
+
+**API Routes:**
+- `GET /api/templates` - List all templates
+- `GET /api/templates/[type]/preview` - Preview template with sample data
+- `POST /api/templates/render` - Render template with custom data
+
+**Status:** ✅ Implemented
 
 ---
 
@@ -408,7 +477,7 @@ None currently.
 | **Credentials** | ✅ Complete | 4/4 | `.env.local` |
 | **Phase 1** | ✅ Complete | 6/6 | 9 files (Next.js, Prisma, configs) |
 | **Phase 2** | ✅ Complete | 7/7 | 9 files (auth, API routes, middleware) |
-| Phase 3 | ⏳ Pending | 0/7 | Email templates, n8n workflows |
+| **Phase 3** | 🔄 In Progress | 5/7 | 15 files (templates, renderer, API, 2 n8n workflows) |
 | Phase 4 | ⏳ Pending | 0/3 | Template management API |
 | Phase 5 | ⏳ Pending | 0/5 | Campaign management API |
 | Phase 6 | ⏳ Pending | 0/3 | WordPress posts integration |
@@ -507,6 +576,54 @@ Create React Email templates and n8n workflows for sending
 - **Git Setup COMPLETED** ✅
 
 **Next Steps:** Phase 3 - Email Infrastructure & n8n Workflows
+
+**Session 2 (2026-01-29):**
+
+**Part 1: n8n MCP Server Setup**
+- Reviewed project status from PROGRESS.md
+- Created ERROR.md file for tracking errors and remedies
+- Verified n8n-mcp package works via npx (v2.33.5)
+- n8n-mcp initialized: 803 nodes loaded, 2737 templates indexed
+- Created MCP configuration file: `/home/apps/newsletter/.mcp.json`
+- Configured with n8n instance URL and API key
+- Added `.mcp.json` to `.gitignore` (contains credentials)
+- **ACTION REQUIRED:** Open Claude Code from `/home/apps/newsletter/` directory (not parent)
+- MCP servers are discovered at project root only - must start Claude Code in newsletter folder
+- Tested n8n API connection directly - WORKING (found "Local RAG AI Agent" workflow)
+- User restarting Claude Code from newsletter directory to enable MCP tools
+
+**Part 2: Phase 3 - Email Infrastructure (In Progress)**
+- n8n MCP tools verified working
+- Created 5 React Email templates:
+  - ClassicNewsletter.tsx - Traditional newsletter with hero, 3-column grid, list
+  - ModernCardLayout.tsx - Titanium & Glass inspired dark theme cards
+  - MinimalTextFocused.tsx - Text-heavy, numbered posts, serif typography
+  - MagazineLayout.tsx - Bold magazine style with large images
+  - AnnouncementUpdate.tsx - Single-column announcement format
+- Created shared email components:
+  - EmailHeader.tsx - Multi-variant header with logo/text support
+  - EmailFooter.tsx - Multi-variant footer with unsubscribe links
+  - EmailButton.tsx - Primary/secondary/outline button variants
+  - PostCard.tsx - Card/horizontal/minimal/magazine/list variants
+- Created email types and constants (src/emails/types.ts)
+- Built template rendering system:
+  - email-renderer.ts with Handlebars variable replacement
+  - Support for {{first_name}}, {{last_name}}, {{current_date}} etc.
+  - Preview mode with sample data
+- Created template API routes:
+  - GET /api/templates - List all templates
+  - GET /api/templates/[type]/preview - Preview with sample data
+  - POST /api/templates/render - Render with custom data
+- Created n8n workflows using MCP tools:
+  - Newsletter - Email Queue Processor (ID: 8lBSn7oHEjzs65TY)
+    - Schedule trigger (every minute)
+    - Fetches pending emails from PostgreSQL
+    - Sends via SMTP, updates status (sent/failed)
+  - Newsletter - Test Email (ID: xo7F2Mio1eaZy0t1)
+    - Webhook trigger: /webhook/newsletter-test-email
+    - Validates input, sends test email, returns JSON response
+- **NEXT:** Configure SMTP and PostgreSQL credentials in n8n UI
+- **NEXT:** Test email sending end-to-end
 
 ---
 

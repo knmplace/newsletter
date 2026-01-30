@@ -63,3 +63,4 @@ Thumbs.db
 # Credentials
 *.key
 credentials.json
+.mcp.json
