@@ -63,7 +63,9 @@
 
 | Error | Cause | Remedy | Date |
 |-------|-------|--------|------|
-| *No errors logged yet* | - | - | - |
+| ProfileGrid API returns 403 "pg_rest_missing_token" | ProfileGrid uses dynamic token system - must POST to /token endpoint with credentials | POST to `https://knmplace.com/wp-json/profilegrid/v1/token` with body: `{username,application_password}`. Token valid 24hrs. Use `PG-Token` header in subsequent requests | 2026-02-01 |
+| ProfileGrid `/groups` endpoint was 403 | Needed valid token from /token endpoint | Generate token via POST /profilegrid/v1/token, then use token in PG-Token header - /groups now returns 200 ✅ with group data | 2026-02-01 |
+| API testing - Group creation and auto-approval | ✅ **RESOLVED** - Successfully created "Claude Test" group with auto-approval | Test confirmed: Group ID 4 created with `group_options: {auto_approve_members: true, registration_approval: auto}`. All API endpoints fully functional. Ready for n8n workflows. | 2026-02-01 |
 
 ---
 
